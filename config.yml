@@ -1,0 +1,82 @@
+# AI Dataset Generator - Configuration
+# ─────────────────────────────────────────────────────────
+# Edit this file to control what gets generated in CI.
+# Trigger regeneration by pushing changes to this file.
+
+# ── Generation Settings ───────────────────────────────────
+generation:
+  # Which datasets to generate: all | hospital_patients | ecommerce_transactions | employee_attrition
+  dataset: all
+
+  # Number of rows to generate (per dataset)
+  # GitHub Actions recommendation: max 50_000 for fast CI
+  size: 10000
+
+  # Number of features to include (null = all available features)
+  # Example: set to 15 to select 15 features from the schema
+  features: null
+
+  # Noise level: 0.0 (clean) to 1.0 (very noisy)
+  # Adds realistic imperfections to the data distributions
+  noise: 0.15
+
+  # Random seed for reproducibility
+  seed: 42
+
+# ── Model Settings ────────────────────────────────────────
+model:
+  # Small model options for GitHub Actions (<=1B params):
+  #   distilgpt2     - 82M params, ~350MB, fastest
+  #   gpt2           - 117M params, ~500MB, good quality
+  #   microsoft/phi-1 - 1.3B params, ~2.5GB, best quality (may be slow)
+  # Note: model is used for schema generation, not value generation
+  name: distilgpt2
+
+  # Run on CPU (required for GitHub Actions free tier)
+  device: cpu
+
+  # Cache models in GitHub Actions to speed up subsequent runs
+  cache: true
+
+# ── Output Settings ───────────────────────────────────────
+output:
+  # Directory for CSV and JSON outputs
+  data_dir: output
+
+  # Directory for GitHub Pages HTML
+  docs_dir: docs
+
+  # Save CSV files in repository (warning: large files use Git LFS)
+  save_csv: true
+
+  # Save statistics JSON (used for visualizations)
+  save_stats: true
+
+  # Save metadata JSON
+  save_metadata: true
+
+# ── GitHub Pages ─────────────────────────────────────────
+pages:
+  # Chart color theme: github-dark | github-light | ocean | forest
+  theme: github-dark
+
+  # Charts to show for numeric features: histogram | boxplot | both
+  numeric_chart: histogram
+
+  # Show correlation heatmap (requires pandas)
+  show_correlation: false
+
+# ── Dataset-specific Overrides ────────────────────────────
+# Override global settings per dataset
+overrides:
+  hospital_patients:
+    size: 10000
+    noise: 0.15
+
+  ecommerce_transactions:
+    size: 10000
+    noise: 0.10
+
+  employee_attrition:
+    size: 5000
+    noise: 0.20
