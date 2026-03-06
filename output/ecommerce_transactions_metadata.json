@@ -1,0 +1,26 @@
+{
+  "dataset": "ecommerce_transactions",
+  "description": "E-commerce transaction records",
+  "features": 10,
+  "size": 5000,
+  "noise": 0.1,
+  "seed": 42,
+  "generated_at": "2026-03-06T11:12:48.644125Z",
+  "target_column": "is_fraud",
+  "feature_names": [
+    "customer_age",
+    "purchase_amount",
+    "num_items",
+    "category",
+    "payment_method",
+    "device",
+    "time_on_site",
+    "pages_visited",
+    "discount_applied",
+    "is_fraud"
+  ],
+  "model_info": {
+    "approach": "LLM-guided schema + numpy statistical generation",
+    "framework": "HuggingFace Transformers / DistilGPT2"
+  }
+}

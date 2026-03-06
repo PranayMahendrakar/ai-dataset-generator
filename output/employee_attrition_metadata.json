@@ -1,0 +1,26 @@
+{
+  "dataset": "employee_attrition",
+  "description": "Employee HR data for attrition prediction",
+  "features": 10,
+  "size": 5000,
+  "noise": 0.1,
+  "seed": 42,
+  "generated_at": "2026-03-06T11:12:52.689562Z",
+  "target_column": "attrition",
+  "feature_names": [
+    "age",
+    "years_at_company",
+    "monthly_income",
+    "job_satisfaction",
+    "work_life_balance",
+    "overtime",
+    "department",
+    "education",
+    "performance_rating",
+    "attrition"
+  ],
+  "model_info": {
+    "approach": "LLM-guided schema + numpy statistical generation",
+    "framework": "HuggingFace Transformers / DistilGPT2"
+  }
+}

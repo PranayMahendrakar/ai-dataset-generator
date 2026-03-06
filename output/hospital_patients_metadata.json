@@ -1,0 +1,33 @@
+{
+  "dataset": "hospital_patients",
+  "description": "Hospital patient records with medical features",
+  "features": 17,
+  "size": 5000,
+  "noise": 0.1,
+  "seed": 42,
+  "generated_at": "2026-03-06T11:12:44.397197Z",
+  "target_column": "readmitted",
+  "feature_names": [
+    "age",
+    "gender",
+    "blood_pressure_systolic",
+    "blood_pressure_diastolic",
+    "heart_rate",
+    "temperature",
+    "bmi",
+    "cholesterol",
+    "glucose",
+    "hemoglobin",
+    "wbc_count",
+    "platelet_count",
+    "creatinine",
+    "admission_type",
+    "length_of_stay",
+    "diagnosis",
+    "readmitted"
+  ],
+  "model_info": {
+    "approach": "LLM-guided schema + numpy statistical generation",
+    "framework": "HuggingFace Transformers / DistilGPT2"
+  }
+}
