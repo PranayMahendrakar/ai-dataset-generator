@@ -1,0 +1,146 @@
+name: Generate AI Datasets & Deploy Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'generate_dataset.py'
+      - 'build_pages.py'
+      - 'config.yml'
+      - '.github/workflows/generate.yml'
+  workflow_dispatch:
+    inputs:
+      dataset:
+        description: 'Dataset type'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - hospital_patients
+          - ecommerce_transactions
+          - employee_attrition
+      size:
+        description: 'Number of rows (per dataset)'
+        required: false
+        default: '5000'
+      features:
+        description: 'Number of features (blank = all)'
+        required: false
+        default: ''
+      noise:
+        description: 'Noise level (0.0 - 1.0)'
+        required: false
+        default: '0.1'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  generate-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install numpy
+          # Install transformers with CPU-only torch (small footprint)
+          pip install transformers[torch] --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Resolve generation parameters
+        id: params
+        run: |
+          DATASET="${{ github.event.inputs.dataset || 'all' }}"
+          SIZE="${{ github.event.inputs.size || '5000' }}"
+          FEATURES="${{ github.event.inputs.features || '' }}"
+          NOISE="${{ github.event.inputs.noise || '0.1' }}"
+          echo "dataset=$DATASET" >> $GITHUB_OUTPUT
+          echo "size=$SIZE" >> $GITHUB_OUTPUT
+          echo "features=$FEATURES" >> $GITHUB_OUTPUT
+          echo "noise=$NOISE" >> $GITHUB_OUTPUT
+          echo ""
+          echo "=== Generation Parameters ==="
+          echo "Dataset  : $DATASET"
+          echo "Size     : $SIZE rows"
+          echo "Features : ${FEATURES:-all}"
+          echo "Noise    : $NOISE"
+
+      - name: Generate datasets
+        run: |
+          DATASET="${{ steps.params.outputs.dataset }}"
+          SIZE="${{ steps.params.outputs.size }}"
+          NOISE="${{ steps.params.outputs.noise }}"
+          FEATURES_ARG=""
+          if [ -n "${{ steps.params.outputs.features }}" ]; then
+            FEATURES_ARG="--features ${{ steps.params.outputs.features }}"
+          fi
+
+          mkdir -p output
+
+          if [ "$DATASET" = "all" ]; then
+            echo "Generating ALL datasets..."
+            python generate_dataset.py --dataset hospital_patients --size $SIZE --noise $NOISE $FEATURES_ARG --output output
+            python generate_dataset.py --dataset ecommerce_transactions --size $SIZE --noise $NOISE $FEATURES_ARG --output output
+            python generate_dataset.py --dataset employee_attrition --size $SIZE --noise $NOISE $FEATURES_ARG --output output
+          else
+            echo "Generating $DATASET..."
+            python generate_dataset.py --dataset $DATASET --size $SIZE --noise $NOISE $FEATURES_ARG --output output
+          fi
+
+          echo "=== Generated files ==="
+          ls -lh output/
+
+      - name: Build GitHub Pages
+        run: |
+          mkdir -p docs
+          OUTPUT_DIR=output DOCS_DIR=docs python build_pages.py
+          echo "=== Pages files ==="
+          ls -lh docs/
+
+      - name: Upload dataset artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-datasets
+          path: output/*.csv
+          retention-days: 30
+
+      - name: Commit docs to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git add output/*.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: regenerate datasets and pages [skip ci]"
+            git push
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
