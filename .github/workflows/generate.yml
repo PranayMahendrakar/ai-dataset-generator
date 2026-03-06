@@ -48,6 +48,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -59,8 +61,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install numpy
-          # Install transformers with CPU-only torch (small footprint)
-          pip install transformers[torch] --extra-index-url https://download.pytorch.org/whl/cpu
+          pip install transformers
           pip install torch --index-url https://download.pytorch.org/whl/cpu
 
       - name: Resolve generation parameters
@@ -74,7 +75,6 @@ jobs:
           echo "size=$SIZE" >> $GITHUB_OUTPUT
           echo "features=$FEATURES" >> $GITHUB_OUTPUT
           echo "noise=$NOISE" >> $GITHUB_OUTPUT
-          echo ""
           echo "=== Generation Parameters ==="
           echo "Dataset  : $DATASET"
           echo "Size     : $SIZE rows"
@@ -90,28 +90,21 @@ jobs:
           if [ -n "${{ steps.params.outputs.features }}" ]; then
             FEATURES_ARG="--features ${{ steps.params.outputs.features }}"
           fi
-
           mkdir -p output
-
           if [ "$DATASET" = "all" ]; then
-            echo "Generating ALL datasets..."
             python generate_dataset.py --dataset hospital_patients --size $SIZE --noise $NOISE $FEATURES_ARG --output output
             python generate_dataset.py --dataset ecommerce_transactions --size $SIZE --noise $NOISE $FEATURES_ARG --output output
             python generate_dataset.py --dataset employee_attrition --size $SIZE --noise $NOISE $FEATURES_ARG --output output
           else
-            echo "Generating $DATASET..."
             python generate_dataset.py --dataset $DATASET --size $SIZE --noise $NOISE $FEATURES_ARG --output output
           fi
-
-          echo "=== Generated files ==="
-          ls -lh output/
+          echo "=== Generated files ===" && ls -lh output/
 
       - name: Build GitHub Pages
         run: |
           mkdir -p docs
           OUTPUT_DIR=output DOCS_DIR=docs python build_pages.py
-          echo "=== Pages files ==="
-          ls -lh docs/
+          echo "=== Pages files ===" && ls -lh docs/
 
       - name: Upload dataset artifacts
         uses: actions/upload-artifact@v4
@@ -124,13 +117,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
           git add docs/
           git add output/*.json
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "chore: regenerate datasets and pages [skip ci]"
-            git push
+            git push origin main
           fi
 
       - name: Setup Pages
