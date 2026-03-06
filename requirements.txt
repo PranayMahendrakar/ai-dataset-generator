@@ -1,0 +1,19 @@
+# AI Dataset Generator - Dependencies
+# ----------------------------------------
+# Core (always needed)
+numpy>=1.24.0
+
+# HuggingFace Transformers (for LLM-guided schema generation)
+# Uses DistilGPT2 (~350MB) - fits in GitHub Actions memory
+transformers>=4.35.0
+
+# PyTorch CPU-only (GitHub Actions compatible)
+# Install with: pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0
+
+# Optional: for local development with larger models
+# accelerate>=0.24.0
+# sentencepiece>=0.1.99
+
+# Dev/test utilities (optional)
+# pytest>=7.4.0
