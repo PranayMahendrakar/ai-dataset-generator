@@ -5,7 +5,7 @@
   "size": 5000,
   "noise": 0.1,
   "seed": 42,
-  "generated_at": "2026-03-06T11:12:52.689562Z",
+  "generated_at": "2026-03-06T14:20:39.875756Z",
   "target_column": "attrition",
   "feature_names": [
     "age",
